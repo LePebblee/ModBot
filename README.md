@@ -16,6 +16,7 @@ A Discord bot with moderation capabilities, logging, and appeal management syste
 - Python 3.8 or higher
 - Discord Bot Token (get from [Discord Developer Portal](https://discord.com/developers/applications))
 - Required Python packages (see requirements.txt)
+- Ollama (For use with /llm command only)
 
 ## Installation
 
