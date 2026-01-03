@@ -22,21 +22,20 @@ A Discord bot with moderation capabilities, logging, and appeal management syste
 
 1. Clone this repository:
    ```bash
-   git clone <repository-url>
-   cd <repository-name>
+   git clone (https://github.com/LePebblee/ModBot.git)
+   cd <repository-dir>
    ```
 
 2. Install required packages:
    ```bash
    pip install -r requirements.txt
    ```
-   Make sure you are in the directory of the bot before running the installer.
 
 3. Set up configuration files:
    - Update `config.json` with your bot token and server/channel IDs
    - Update `passwd.json` with your admin password
 
-## Configuration
+## Configuration should look like:
 
 ### config.json
 ```json
@@ -69,15 +68,9 @@ A Discord bot with moderation capabilities, logging, and appeal management syste
 
 3. Access the dashboard using the password set in `passwd.json`
 
-## Security
-
-- Keep your bot token secure and never commit it to version control
-- Use a strong password for the web dashboard
-- Regularly update dependencies
-
 ## Custom Commands
 
-The bot supports dynamic command creation through the web dashboard. You can create custom slash commands with Python scripts that have access to the interaction object.
+The bot supports dynamic command creation through the web dashboard, and command generation with Qwen. You can create custom slash commands with Python scripts that have access to the interaction object. However, if you use Qwen, it will likely not work because Qwen uses code blocks even when told not to. The edit button in the active commands section is there for this exact reason.
 
 ## Appeal System
 
