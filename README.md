@@ -27,8 +27,9 @@ A Discord bot with moderation capabilities, logging, and appeal management syste
 
 2. Install required packages:
    ```bash
-   pip install discord.py flask aiohttp
+   pip install -r requirements.txt
    ```
+   Make sure you are in the directory of the bot before running the installer.
 
 3. Set up configuration files:
    - Update `config.json` with your bot token and server/channel IDs
