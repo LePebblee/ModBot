@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DisCoder | Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-slate-950 border-r border-slate-800 flex flex-col hidden md:flex">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold tracking-tight text-indigo-400">DisCoder</h1>
+            <p class="text-xs text-slate-500 font-mono mt-1">Bot Management System</p>
+        </div>
+        
+        <nav class="flex-1 px-4 space-y-2">
+            <a href="/" class="flex items-center gap-3 px-4 py-3 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-lg transition-colors">
+                <i class="ph ph-squares-four text-xl"></i>
+                <span class="font-medium">Dashboard</span>
+            </a>
+            <a href="/logs" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-indigo-400 rounded-lg transition-colors">
+                <i class="ph ph-scroll text-xl"></i>
+                <span class="font-medium">Logs</span>
+            </a>
+            <a href="/appeals" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-indigo-400 rounded-lg transition-colors">
+                <i class="ph ph-gavel text-xl"></i>
+                <span class="font-medium">Appeals</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800">
+             <a href="/logout" class="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors mb-4">
+                <i class="ph ph-sign-out"></i> Logout
+            </a>
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                <span class="text-xs font-mono text-emerald-500">System Online</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-8">
+        <header class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-bold text-white">Command Manager</h2>
+            <button class="md:hidden p-2 text-slate-400">
+                <i class="ph ph-list text-2xl"></i>
+            </button>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Create Command Form -->
+            <div class="lg:col-span-1 bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-700 h-fit">
+                <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                    <i class="ph ph-plus-circle text-indigo-400"></i>
+                    Create Command
+                </h2>
+                <form id="addForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Command Name</label>
+                        <input type="text" name="name" placeholder="e.g. ping" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder-slate-600">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Python Script</label>
+                        <textarea name="script" rows="8" placeholder="await interaction.response.send_message('Hello!')" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 font-mono text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder-slate-600"></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 rounded-lg transition-colors shadow-lg shadow-indigo-500/20 cursor-pointer">
+                        Register Slash Command
+                    </button>
+                </form>
+            </div>
+
+            <!-- Generate Command with Qwen -->
+            <div class="lg:col-span-1 bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-700 h-fit">
+                <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                    <i class="ph ph-sparkle text-purple-400"></i>
+                    Generate with Qwen
+                </h2>
+                <form id="generateForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Command Name</label>
+                        <input type="text" name="name" placeholder="e.g. greet" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 outline-none transition-all placeholder-slate-600">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Description</label>
+                        <textarea name="description" rows="6" placeholder="Describe what the command should do..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 font-mono text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all placeholder-slate-600"></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 rounded-lg transition-colors shadow-lg shadow-purple-500/20 cursor-pointer">
+                        Generate & Register
+                    </button>
+                </form>
+            </div>
+
+            <!-- Active Commands List -->
+            <div class="lg:col-span-1 bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-700">
+                <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                    <i class="ph ph-lightning text-amber-400"></i>
+                    Active Commands
+                </h2>
+                <div class="space-y-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                    {% for name, script in commands.items() %}
+                    <div class="flex items-center justify-between bg-slate-950 p-4 rounded-xl border border-slate-800 group hover:border-slate-700 transition-all">
+                        <div class="overflow-hidden mr-3">
+                            <div class="flex items-center gap-2">
+                                <span class="text-indigo-400 font-mono font-bold text-lg">/{{ name }}</span>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1 font-mono truncate opacity-75">{{ script }}</p>
+                        </div>
+                        <div class="flex gap-2 shrink-0">
+                            <!-- Fixed: Removed data-script attribute and updated onclick handler -->
+                            <button onclick="editCommand('{{ name }}')" class="bg-blue-500/10 hover:bg-blue-600 text-blue-500 hover:text-white p-2 rounded-lg transition-all cursor-pointer flex items-center justify-center h-10 w-10" title="Edit Command">
+                                <i class="ph ph-pencil-simple text-xl"></i>
+                            </button>
+                            <button onclick="deleteCommand('{{ name }}')" class="bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white p-2 rounded-lg transition-all cursor-pointer flex items-center justify-center h-10 w-10" title="Delete Command">
+                                <i class="ph ph-trash text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-12 text-slate-500">
+                        <i class="ph ph-code text-4xl mb-3 opacity-50"></i>
+                        <p>No custom commands active.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Global Data Object for safe script handling -->
+    <script>
+        const commandsData = JSON.parse('{{ commands|tojson|safe }}');
+    </script>
+
+    <script>
+        document.getElementById('addForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = "Registering...";
+
+            try {
+                const formData = new FormData(e.target);
+                const res = await fetch('/add_cmd', { method: 'POST', body: formData });
+                if (res.ok) location.reload();
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        };
+
+        document.getElementById('generateForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> Generating...';
+
+            try {
+                const formData = new FormData(e.target);
+                const res = await fetch('/generate_cmd', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (err) {
+                alert('Connection error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        };
+
+        async function deleteCommand(name) {
+            if(!confirm(`Are you sure you want to delete /${name}?`)) return;
+
+            const formData = new URLSearchParams();
+            formData.append('name', name);
+            const res = await fetch('/delete_cmd', { method: 'POST', body: formData });
+            if (res.ok) location.reload();
+        }
+
+        function editCommand(name) {
+            // Retrieve script from the global object instead of DOM attribute
+            const script = commandsData[name];
+
+            document.getElementById('editOldName').value = name;
+            document.getElementById('editName').value = name;
+            document.getElementById('editScript').value = script;
+
+            const modal = document.getElementById('editModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeEditModal() {
+            const modal = document.getElementById('editModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Use event delegation to handle form submission since the form is loaded later
+        document.addEventListener('submit', async function(e) {
+            if (e.target.id === 'editForm') {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const res = await fetch('/edit_cmd', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            }
+        });
+
+        // Close modal on outside click
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) closeEditModal();
+        });
+    </script>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 transition-opacity">
+        <div class="bg-slate-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl border border-slate-700 transform transition-all">
+            <h2 class="text-xl font-semibold mb-4 flex items-center gap-2 text-white">
+                <i class="ph ph-pencil-simple text-blue-400"></i>
+                Edit Command
+            </h2>
+            <form id="editForm" class="space-y-4">
+                <input type="hidden" name="old_name" id="editOldName">
+                <div>
+                    <label class="block text-sm font-medium text-slate-400 mb-1">Command Name</label>
+                    <input type="text" name="name" id="editName" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-slate-200">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-400 mb-1">Python Script</label>
+                    <textarea name="script" id="editScript" rows="10" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all text-slate-300 custom-scrollbar"></textarea>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeEditModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg transition-colors cursor-pointer">Cancel</button>
+                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 rounded-lg transition-colors shadow-lg shadow-blue-500/20 cursor-pointer">Update Command</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <style>
+        /* Custom scrollbar for textareas and lists */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</body>
+</html>

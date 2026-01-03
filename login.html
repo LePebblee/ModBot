@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DisCoder | Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex items-center justify-center p-4">
+    <div class="bg-slate-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-slate-700">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-indigo-400">DisCoder</h1>
+            <p class="text-slate-500 mt-2">Moderator Access Required</p>
+        </div>
+
+        <form action="/login" method="POST" class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-slate-400 mb-2">Access Password</label>
+                <div class="relative">
+                    <i class="ph ph-lock-key absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                    <input type="password" name="password" required placeholder="Enter password..." 
+                        class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-10 pr-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder-slate-600">
+                </div>
+            </div>
+            
+            {% if error %}
+            <div class="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-indigo-500/20">
+                Authenticate
+            </button>
+        </form>
+        
+        <div class="mt-6 text-center">
+            <a href="/logs" class="text-sm text-slate-500 hover:text-indigo-400 transition-colors">Return to Public Logs</a>
+        </div>
+    </div>
+</body>
+</html>

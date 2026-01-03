@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DisCoder | Appeals</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-slate-950 border-r border-slate-800 flex flex-col hidden md:flex">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold tracking-tight text-indigo-400">DisCoder</h1>
+            <p class="text-xs text-slate-500 font-mono mt-1">Bot Management System</p>
+        </div>
+        
+        <nav class="flex-1 px-4 space-y-2">
+            <a href="/" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-indigo-400 rounded-lg transition-colors">
+                <i class="ph ph-squares-four text-xl"></i>
+                <span class="font-medium">Dashboard</span>
+            </a>
+            <a href="/logs" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-indigo-400 rounded-lg transition-colors">
+                <i class="ph ph-scroll text-xl"></i>
+                <span class="font-medium">Logs</span>
+            </a>
+            <a href="/appeals" class="flex items-center gap-3 px-4 py-3 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-lg transition-colors">
+                <i class="ph ph-gavel text-xl"></i>
+                <span class="font-medium">Appeals</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800">
+             <a href="/logout" class="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors mb-4">
+                <i class="ph ph-sign-out"></i> Logout
+            </a>
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                <span class="text-xs font-mono text-emerald-500">System Online</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-8">
+        <header class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-bold text-white">Active Appeals</h2>
+            <button class="md:hidden p-2 text-slate-400">
+                <i class="ph ph-list text-2xl"></i>
+            </button>
+        </header>
+
+        <div class="grid grid-cols-1 gap-6">
+            {% for appeal in appeals %}
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-6 shadow-lg transition-all hover:border-slate-600">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-indigo-500/10 p-2 rounded-lg text-indigo-400">
+                            <i class="ph ph-user text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-200">User ID: <span class="font-mono text-indigo-400">{{ appeal.user_id }}</span></h3>
+                            <p class="text-xs text-slate-500">Log ID: {{ appeal.log_id }}</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-mono text-slate-500">{{ appeal.timestamp }}</span>
+                </div>
+                
+                <div class="bg-slate-900/50 rounded-lg p-4 border border-slate-700/50 mb-4">
+                    <p class="text-sm text-slate-300 italic">"{{ appeal.text }}"</p>
+                </div>
+
+                <div class="flex gap-3 justify-end">
+                    <button onclick="dismissAppeal('{{ appeal.user_id }}', '{{ appeal.log_id }}')" 
+                            class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                        <i class="ph ph-trash"></i> Dismiss
+                    </button>
+                    <button onclick="openCase('{{ appeal.user_id }}', '{{ appeal.log_id }}')" 
+                            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-indigo-500/20">
+                        <i class="ph ph-chats-circle"></i> Open Case
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-12 text-center text-slate-500">
+                <i class="ph ph-tray text-4xl mb-3 opacity-50"></i>
+                <p>No active appeals found.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <script>
+        async function dismissAppeal(userId, logId) {
+            if (!confirm('Are you sure you want to dismiss this appeal? It will be deleted permanently.')) return;
+            
+            const formData = new FormData();
+            formData.append('user_id', userId);
+            formData.append('log_id', logId);
+
+            try {
+                const res = await fetch('/dismiss_appeal', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (err) {
+                alert('Network error occurred.');
+            }
+        }
+
+        async function openCase(userId, logId) {
+            const btn = event.currentTarget;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> Processing...';
+            btn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('user_id', userId);
+            formData.append('log_id', logId);
+
+            try {
+                const res = await fetch('/open_case', { method: 'POST', body: formData });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    alert('Success: ' + data.message);
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (err) {
+                alert('Network error occurred.');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
