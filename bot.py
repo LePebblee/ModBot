@@ -28,11 +28,11 @@ APPEALS_FILE = 'appeals.json'
 # Configuration Management
 def load_json_file(filename, default):
     if not os.path.exists(filename):
-        with open(filename, 'w') as f:
+        with open(filename, 'w', encoding='utf-8') as f:
             json.dump(default, f, indent=4)
         return default
     try:
-        with open(filename, 'r') as f:
+        with open(filename, 'r', encoding='utf-8') as f:
             return json.load(f)
     except Exception as e:
         logging.error(f"Error loading {filename}: {e}")
@@ -42,7 +42,7 @@ def save_json_file(filename, data):
     import tempfile
     import os
     try:
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json', dir=os.path.dirname(filename)) as f:
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json', dir=os.path.dirname(filename), encoding='utf-8') as f:
             json.dump(data, f, indent=4)
             temp_name = f.name
         os.replace(temp_name, filename)
@@ -55,7 +55,7 @@ def save_json_file(filename, data):
                 pass
 
 config = load_json_file(CONFIG_FILE, {"token": "", "log_channel_id": "", "custom_commands": {}})
-pass_config = load_json_file(PASS_FILE, {"password": "admin"})
+pass_config = load_json_file(PASS_FILE, {"password"})
 
 # Bot Setup
 class DiscordBot(commands.Bot):
@@ -72,6 +72,8 @@ class DiscordBot(commands.Bot):
                 self.create_dynamic_command(name, script)
             except Exception as e:
                 logging.error(f"Failed to load command {name}: {e}")
+        # Add Moderation command group
+        self.tree.add_command(Moderation(self))
         await self.tree.sync()
 
     async def resolve_user(self, user_id):
@@ -326,9 +328,9 @@ def open_case():
         return jsonify({"status": "error", "message": "Missing IDs"}), 400
 
     async def _create_thread_task():
-        channel_id = config.get('log_channel_id')
+        channel_id = config.get('app_channel_id')
         if not channel_id:
-            return "Log channel ID not configured in config.json."
+            return "App channel ID not configured in config.json."
         
         try:
             channel = bot.get_channel(int(channel_id))
@@ -350,13 +352,23 @@ def open_case():
             try:
                 user = await bot.fetch_user(int(user_id))
                 await thread.add_user(user)
-                return "Thread created and user added."
+                thread_result = "Thread created and user added."
             except discord.Forbidden:
                 await thread.send("Created thread, but could not add user (Permissions error or user banned).")
-                return "Thread created (User add failed: Forbidden)."
+                thread_result = "Thread created (User add failed: Forbidden)."
             except Exception as e:
                 await thread.send(f"Created thread, but error adding user: {e}")
-                return f"Thread created (User add failed: {e})."
+                thread_result = f"Thread created (User add failed: {e})."
+            
+            # Send invite link DM to user
+            invite_link = config.get('application_invite_link', 'https://discord.gg/invalid')
+            try:
+                await notify_user_of_appeal(bot, user_id, invite_link)
+                thread_result += " User notified via DM."
+            except Exception as e:
+                logging.error(f"Failed to notify user {user_id}: {e}")
+                
+            return thread_result
                 
         except Exception as e:
             return f"Bot Error: {e}"
