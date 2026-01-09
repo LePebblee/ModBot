@@ -1,49 +1,52 @@
-# DisCoder Discord Bot
+# Please note, this is nothing but a passion project! Updates can be made in a few hours, a few days, or even a few years!
 
-A Discord bot with moderation capabilities, logging, and appeal management system.
 
-## Features
+## Discord Moderation Bot with Appeal System
 
-- Custom slash commands with dynamic creation
-- Moderation commands (ban, kick, timeout)
-- Logging system for moderation actions
-- Appeal management system
-- Web dashboard for command management
-- User appeal submission system
+A comprehensive Discord moderation bot featuring automated logging, appeal system, and web dashboard for managing moderation actions.
 
-## Prerequisites
+### Features
 
-- Python 3.13 or higher
-- Discord Bot Token (get from [Discord Developer Portal](https://discord.com/developers/applications))
-- Required Python packages (see requirements.txt)
-- Ollama (For use with /llm command only)
+- **Automated Logging**: All moderation actions (ban, kick, timeout) are automatically logged
+- **Web Dashboard**: Manage custom commands and view moderation logs through a web interface
+- **Appeal System**: Users can submit appeals for moderation actions with a dedicated workflow
+- **Multi-Server Support**: Separate servers for main moderation and appeal handling
+- **Dynamic Commands**: Create and manage custom slash commands through the web interface
+- **Thread-Based Appeals**: Automatic creation of private threads for appeal discussions
 
-## Installation
+### Prerequisites
 
-1. Clone this repository:
-   ```bash
-   git clone (https://github.com/LePebblee/ModBot.git)
-   cd <repository-dir>
-   ```
+- Python 3.8+
+- Discord Bot Token with appropriate permissions
+- Two Discord servers (main server and appeal server)
 
-2. Install required packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
+### Installation
 
-3. Set up configuration files:
-   - Update `config.json` with your bot token and server/channel IDs
-   - Update `passwd.json` with your admin password
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd <repository-name>
+```
 
-## Configuration should look like:
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+
+### Configuration examples
 
 ### config.json
+Update the `config.json` file with your specific values:
+
 ```json
 {
-    "token": "YOUR_BOT_TOKEN_HERE",
-    "log_channel_id": "YOUR_LOG_CHANNEL_ID_HERE",
-    "main_server": "YOUR_MAIN_SERVER_ID_HERE",
-    "app_server": "application server (PLANNED FOR THE FUTURE)",
+    "token": "YOUR_DISCORD_BOT_TOKEN",
+    "log_channel_id": "LOG_CHANNEL_ID",
+    "main_server": "MAIN_SERVER_ID",
+    "app_server": "APPEAL_SERVER_ID",
+    "app_channel_id": "APPEAL_CHANNEL_ID",
+    "application_invite_link": "https://discord.gg/YOUR_INVITE_LINK",
     "custom_commands": {
         ...
     }
@@ -51,35 +54,93 @@ A Discord bot with moderation capabilities, logging, and appeal management syste
 ```
 
 ### passwd.json
+Set a secure password for the web dashboard:
+
 ```json
 {
-    "password": "YOUR_ADMIN_PASSWORD_HERE"
+    "password": "YOUR_PASSWORD"
 }
 ```
 
-## Usage
+### Required Bot Permissions
 
-1. Run the bot:
-   ```bash
-   python bot.py
-   ```
+Make sure your bot has the following permissions:
+- View Channels
+- Send Messages
+- Manage Messages
+- Embed Links
+- Read Message History
+- Mention Everyone
+- Use External Emojis
+- Ban Members
+- Kick Members
+- Manage Threads
+- Create Public Threads
+- Send Messages in Threads
+- Moderate Members (for timeouts)
 
-2. The web dashboard will be available at `http://localhost:5000`
+- You can use Administrator to bypass all of this, but it is NOT reccomended for anything other than testing.
 
-3. Access the dashboard using the password set in `passwd.json`
+### Usage
 
-## Custom Commands
+### Starting the Bot
 
-The bot supports dynamic command creation through the web dashboard, and command generation with Qwen. You can create custom slash commands with Python scripts that have access to the interaction object. However, if you use Qwen, it will likely not work because Qwen uses code blocks even when told not to. The edit button in the active commands section is there for this exact reason.
+```bash
+python bot.py
+```
 
-## Appeal System
+The bot will start and begin listening for commands, while also launching the web dashboard on `http://<your_local_ip>:5000`.
 
-Users can submit appeals for moderation actions through the public logs page. Moderators can manage appeals through the dashboard.
+### Available Commands
 
-## Contributing
+#### Moderation Commands
+- You shouldn't use the `/mod <command>` commands. They are the commands which are ran by the `/accept` command.
+> See `Mod commands` in issues tab.
+- `/ban`, `/kick`, `/timeout` are the commands you need.
 
-Feel free to submit issues and enhancement requests.
+#### Custom Commands
+Custom commands can be managed through the web dashboard at `http://<your_local_ip>:5000`.
 
-## License
+### Web Dashboard
 
-This project is licensed under the MIT License.
+The web dashboard provides several interfaces:
+
+- **Dashboard** (`/`): Create and manage custom slash commands (requires login)
+- **Logs** (`/logs`): View all moderation logs (public access)
+- **Appeals** (`/appeals`): View and manage pending appeals (requires login)
+
+## Appeal Process Flow
+
+1. **Moderation Action**: A user is banned, kicked, or timed out
+2. **Log Creation**: The action is automatically logged
+3. **Appeal Submission**: User visits `/logs` and clicks "Appeal" on their log entry
+4. **Appeal Review**: Moderators check `/appeals` to see pending appeals
+5. **Case Opening**: Moderator clicks "Open Case" to create a private thread
+6. **Resolution**: Moderator uses `/mod accept` command to resolve the appeal
+
+> This process is still non-functional, but more headway has been made.
+
+
+### File Structure
+
+- `bot.py`: Main bot application with both Discord bot and Flask web server
+- `moderation.py`: Moderation commands implementation
+- `log_helper.py`: Functions for managing moderation logs
+- `config.json`: Bot configuration (tokens, IDs, custom commands)
+- `passwd.json`: Web dashboard password
+- `logs.json`: Stored moderation logs
+- `appeals.json`: Pending appeals
+- All HTML files share names with their .json counterparts.
+
+### Security
+
+- The web dashboard and appeals page is password-protected
+- Moderation commands require appropriate Discord permissions (Untested, proceed with caution.)
+
+### Contributing
+
+Feel free to submit issues and enhancement requests. Pull requests are welcome!
+
+### License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
