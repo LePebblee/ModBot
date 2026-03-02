@@ -1,171 +1,216 @@
 import discord
 from discord import app_commands
-from datetime import datetime
+from discord.ext import commands
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from log_helper import add_log
 import json
 import os
-from datetime import datetime
 
-class Moderation(app_commands.Group):
-    def __init__(self, bot):
-        super().__init__(name="mod", description="Moderation commands")
-        self.bot = bot
+class BanModal(discord.ui.Modal, title="Ban User"):
+    user_id = discord.ui.TextInput(label="User ID", placeholder="User ID here", required=True)
+    reason = discord.ui.TextInput(label="Reason", style=discord.TextStyle.paragraph, required=False)
 
-    @app_commands.command(name="ban", description="Ban a user and log the action")
-    @app_commands.describe(user_id="The ID of the user to ban", reason="Reason for the ban")
-    async def ban(self, interaction: discord.Interaction, user_id: str, reason: Optional[str] = "No reason given"):
-        if not interaction.user.guild_permissions.ban_members:
-            await interaction.response.send_message("You lack permissions to ban members.", ephemeral=True)
-            return
-
+    async def on_submit(self, interaction: discord.Interaction):
         try:
-            user_obj = await self.bot.fetch_user(int(user_id))
-            await interaction.guild.ban(user_obj, reason=reason)
-            
+            user_id_val = self.user_id.value.strip()
+            user = discord.Object(id=int(user_id_val))
+            await interaction.guild.ban(user, reason=self.reason.value or "No reason given")
             add_log({
                 "type": "ban",
-                "user_id": user_id,
-                "reason": reason,
-                "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+                "user_id": user_id_val,
+                "reason": self.reason.value or "No reason given",
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
             })
-            
-            await interaction.response.send_message(f"Successfully banned <@{user_id}>.", ephemeral=True)
+            await interaction.response.send_message(f"Successfully banned user {user_id_val}.", ephemeral=True)
+        except ValueError:
+            await interaction.response.send_message("Invalid User ID.", ephemeral=True)
         except Exception as e:
             await interaction.response.send_message(f"Error: {e}", ephemeral=True)
 
-    @app_commands.command(name="kick", description="Kick a user and log the action")
-    @app_commands.describe(user_id="The ID of the user to kick", reason="Reason for the kick")
-    async def kick(self, interaction: discord.Interaction, user_id: str, reason: Optional[str] = "No reason given"):
-        if not interaction.user.guild_permissions.kick_members:
-            await interaction.response.send_message("You lack permissions to kick members.", ephemeral=True)
-            return
+class KickModal(discord.ui.Modal, title="Kick User"):
+    user_id = discord.ui.TextInput(label="User ID", placeholder="User ID here", required=True)
+    reason = discord.ui.TextInput(label="Reason", style=discord.TextStyle.paragraph, required=False)
 
+    async def on_submit(self, interaction: discord.Interaction):
         try:
-            guild = interaction.guild
-            member = await guild.fetch_member(int(user_id))
-            await member.kick(reason=reason)
+            user_id_val = self.user_id.value.strip()
+            member = interaction.guild.get_member(int(user_id_val))
+            if not member:
+                try:
+                    member = await interaction.guild.fetch_member(int(user_id_val))
+                except:
+                    member = None
+
+            if member:
+                await member.kick(reason=self.reason.value or "No reason given")
+                add_log({
+                    "type": "kick",
+                    "user_id": user_id_val,
+                    "reason": self.reason.value or "No reason given",
+                    "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+                })
+                await interaction.response.send_message(f"Successfully kicked user {member.name}.", ephemeral=True)
+            else:
+                await interaction.response.send_message("Member not found in this server.", ephemeral=True)
+        except ValueError:
+            await interaction.response.send_message("Invalid User ID.", ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"Error: {e}", ephemeral=True)
+
+class TimeoutModal(discord.ui.Modal, title="Timeout User"):
+    user_id = discord.ui.TextInput(label="User ID", placeholder="User ID here", required=True)
+    minutes = discord.ui.TextInput(label="Duration (Minutes)", placeholder="60", required=True)
+    reason = discord.ui.TextInput(label="Reason", style=discord.TextStyle.paragraph, required=False)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            user_id_val = self.user_id.value.strip()
+            member = interaction.guild.get_member(int(user_id_val))
+            if not member:
+                try:
+                    member = await interaction.guild.fetch_member(int(user_id_val))
+                except:
+                    member = None
+
+            if member:
+                duration = timedelta(minutes=int(self.minutes.value))
+                await member.timeout(duration, reason=self.reason.value or "No reason given")
+                add_log({
+                    "type": "timeout",
+                    "user_id": user_id_val,
+                    "reason": self.reason.value or f"Timed out for {self.minutes.value} minutes",
+                    "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+                })
+                await interaction.response.send_message(f"Successfully timed out user {member.name} for {self.minutes.value}m.", ephemeral=True)
+            else:
+                await interaction.response.send_message("Member not found in this server.", ephemeral=True)
+        except ValueError:
+            await interaction.response.send_message("Invalid User ID or Minutes.", ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"Error: {e}", ephemeral=True)
+
+class AcceptModal(discord.ui.Modal, title='Accept Appeal'):
+    user_id = discord.ui.TextInput(label='User ID', placeholder='User ID to act upon', required=True)
+    reason = discord.ui.TextInput(label='Reason', style=discord.TextStyle.paragraph, required=False)
+
+    def __init__(self, action_type: str, bot):
+        super().__init__()
+        self.action_type = action_type
+        self.bot = bot
+
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            user_id_val = self.user_id.value.strip()
+            uid = int(user_id_val)
+
+            cfg_path = 'config.json'
+            if os.path.exists(cfg_path):
+                with open(cfg_path, 'r', encoding='utf-8') as f:
+                    cfg = json.load(f)
+            else:
+                await interaction.response.send_message("Config file not found.", ephemeral=True)
+                return
+
+            main_server_id = cfg.get('main_server')
+            if not main_server_id:
+                await interaction.response.send_message("Main server ID not configured in config.json.", ephemeral=True)
+                return
+
+            guild = self.bot.get_guild(int(main_server_id))
+            if not guild:
+                try:
+                    guild = await self.bot.fetch_guild(int(main_server_id))
+                except:
+                    guild = None
+
+            if not guild:
+                await interaction.response.send_message(f"Bot is not a member of the main server ({main_server_id}).", ephemeral=True)
+                return
+
+            user_mention = f"<@{uid}>"
+            target_reason = self.reason.value or "Appeal accepted"
+
+            if self.action_type == 'unban':
+                try:
+                    user = await self.bot.fetch_user(uid)
+                    await guild.unban(user, reason=target_reason)
+                    action_msg = f"Appeal Accepted. Unbanned {user_mention} in the main server."
+                except discord.NotFound:
+                    await interaction.response.send_message("User or ban not found.", ephemeral=True)
+                    return
+            elif self.action_type == 'untimeout':
+                member = guild.get_member(uid)
+                if not member:
+                    try:
+                        member = await guild.fetch_member(uid)
+                    except Exception:
+                        member = None
+                if member:
+                    await member.timeout(None, reason=target_reason)
+                    action_msg = f"Appeal Accepted. Removed timeout from {user_mention} in the main server."
+                else:
+                    await interaction.response.send_message(f"Could not find member {uid} in the main server.", ephemeral=True)
+                    return
+            elif self.action_type == 'unkick':
+                action_msg = f"Appeal Accepted. Kick overturned for {user_mention}. User may need to rejoin via invite."
+            else:
+                await interaction.response.send_message(f"Unknown action: {self.action_type}", ephemeral=True)
+                return
 
             add_log({
-                "type": "kick",
-                "user_id": user_id,
-                "reason": reason,
-                "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+                "type": self.action_type,
+                "user_id": str(uid),
+                "reason": target_reason,
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
             })
+            await interaction.response.send_message(action_msg, ephemeral=False)
 
-            await interaction.response.send_message(f"Successfully kicked <@{user_id}>.", ephemeral=True)
+        except ValueError:
+            await interaction.response.send_message("Invalid User ID.", ephemeral=True)
+        except discord.Forbidden:
+            await interaction.response.send_message("Bot lacks permissions to perform this action in the main server.", ephemeral=True)
         except Exception as e:
-            await interaction.response.send_message(f"Error: {e}", ephemeral=True)
+            await interaction.response.send_message(f"Error performing action: {e}", ephemeral=True)
 
-    @app_commands.command(name="accept", description="Accept an appeal and undo an action on the main server")
-    @app_commands.describe(user_id="The ID of the user to act upon", reason="Optional reason for the action")
-    async def accept(self, interaction: discord.Interaction, user_id: str, reason: Optional[str] = None):
-        # Present a dropdown to choose which action to undo on the configured main server
-        if not interaction.user.guild_permissions.manage_guild and not interaction.user.guild_permissions.ban_members:
-            await interaction.response.send_message("You lack permissions to perform moderation actions.", ephemeral=True)
-            return
+class ActionSelect(discord.ui.Select):
+    def __init__(self, bot):
+        options = [
+            discord.SelectOption(label="Unban", value="unban", description="Remove a ban for the user"),
+            discord.SelectOption(label="Untimeout", value="untimeout", description="Remove timeout from the user"),
+            discord.SelectOption(label="Unkick", value="unkick", description="Record that a kick was overturned"),
+        ]
+        super().__init__(placeholder="Select action to perform...", min_values=1, max_values=1, options=options)
+        self.bot = bot
 
-        class ActionSelect(discord.ui.Select):
-            def __init__(self, target_user_id: str, target_reason: Optional[str], bot):
-                options = [
-                    discord.SelectOption(label="Unban", value="unban", description="Remove a ban for the user"),
-                    discord.SelectOption(label="Untimeout", value="untimeout", description="Remove timeout from the user"),
-                    discord.SelectOption(label="Unkick", value="unkick", description="Record that a kick was overturned"),
-                ]
-                super().__init__(placeholder="Select action to perform...", min_values=1, max_values=1, options=options)
-                self.target_user_id = target_user_id
-                self.target_reason = target_reason or "Appeal accepted"
-                self.bot = bot
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.send_modal(AcceptModal(self.values[0], self.bot))
 
-            async def callback(self, select_interaction: discord.Interaction):
-                # Load config to find main_server
-                try:
-                    cfg_path = os.path.join(os.getcwd(), 'config.json')
-                    if not os.path.exists(cfg_path):
-                        await select_interaction.response.send_message("Config file not found.", ephemeral=True)
-                        return
-                    with open(cfg_path, 'r', encoding='utf-8') as f:
-                        cfg = json.load(f)
-                    main_server_id = cfg.get('main_server')
-                    if not main_server_id:
-                        await select_interaction.response.send_message("Main server not configured in config.json.", ephemeral=True)
-                        return
+class Moderation(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
 
-                    guild = self.bot.get_guild(int(main_server_id))
-                    if not guild:
-                        await select_interaction.response.send_message(f"Bot is not a member of the main server ({main_server_id}).", ephemeral=True)
-                        return
+    @app_commands.command(name="ban", description="Ban a user via a modal")
+    @app_commands.default_permissions(ban_members=True)
+    async def ban(self, interaction: discord.Interaction):
+        await interaction.response.send_modal(BanModal())
 
-                    action = self.values[0]
-                    uid = int(self.target_user_id)
+    @app_commands.command(name="kick", description="Kick a user via a modal")
+    @app_commands.default_permissions(kick_members=True)
+    async def kick(self, interaction: discord.Interaction):
+        await interaction.response.send_modal(KickModal())
 
-                    if action == 'unban':
-                        try:
-                            user = await self.bot.fetch_user(uid)
-                            await guild.unban(user, reason=self.target_reason)
-                            add_log({
-                                "type": "unban",
-                                "user_id": str(uid),
-                                "reason": self.target_reason,
-                                "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-                            })
-                            await select_interaction.response.send_message(f"Unbanned <@{uid}> in the main server.", ephemeral=True)
-                        except discord.NotFound:
-                            await select_interaction.response.send_message("User or ban not found.", ephemeral=True)
-                        except discord.Forbidden:
-                            await select_interaction.response.send_message("Bot lacks permission to unban in the main server.", ephemeral=True)
-                        except Exception as e:
-                            await select_interaction.response.send_message(f"Error unbanning: {e}", ephemeral=True)
+    @app_commands.command(name="timeout", description="Timeout a user via a modal")
+    @app_commands.default_permissions(moderate_members=True)
+    async def timeout(self, interaction: discord.Interaction):
+        await interaction.response.send_modal(TimeoutModal())
 
-                    elif action == 'untimeout':
-                        try:
-                            member = guild.get_member(uid)
-                            if not member:
-                                try:
-                                    member = await guild.fetch_member(uid)
-                                except Exception:
-                                    member = None
-
-                            if not member:
-                                await select_interaction.response.send_message(f"Could not find member {uid} in the main server.", ephemeral=True)
-                                return
-
-                            await member.timeout(None, reason=self.target_reason)
-                            add_log({
-                                "type": "untimeout",
-                                "user_id": str(uid),
-                                "reason": self.target_reason,
-                                "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-                            })
-                            await select_interaction.response.send_message(f"Removed timeout from <@{uid}> in the main server.", ephemeral=True)
-                        except discord.Forbidden:
-                            await select_interaction.response.send_message("Bot lacks permission to remove timeout in the main server.", ephemeral=True)
-                        except Exception as e:
-                            await select_interaction.response.send_message(f"Error removing timeout: {e}", ephemeral=True)
-
-                    elif action == 'unkick':
-                        # Cannot directly "unkick" a user; mark the appeal as accepted for the record
-                        add_log({
-                            "type": "unkick",
-                            "user_id": str(uid),
-                            "reason": self.target_reason,
-                            "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-                        })
-                        await select_interaction.response.send_message(f"Recorded overturn of kick for <@{uid}>. User may need to rejoin manually.", ephemeral=True)
-
-                    else:
-                        await select_interaction.response.send_message(f"Unknown action: {action}", ephemeral=True)
-
-                except Exception as e:
-                    await select_interaction.response.send_message(f"Error performing action: {e}", ephemeral=True)
-
-        class ActionView(discord.ui.View):
-            def __init__(self, target_user_id: str, target_reason: Optional[str], bot):
-                super().__init__(timeout=300)
-                self.add_item(ActionSelect(target_user_id, target_reason, bot))
-
-        view = ActionView(user_id, reason, self.bot)
-        await interaction.response.send_message(f"Choose action to perform on <@{user_id}> in the main server:", view=view, ephemeral=True)
+    @app_commands.command(name="accept", description="Accept an appeal and undo an action")
+    @app_commands.default_permissions(manage_guild=True)
+    async def accept(self, interaction: discord.Interaction):
+        view = discord.ui.View(timeout=300)
+        view.add_item(ActionSelect(self.bot))
+        await interaction.response.send_message("Select the action to undo:", view=view, ephemeral=True)
 
 async def notify_user_of_appeal(bot, user_id: str, invite_link: str):
     try:

@@ -94,9 +94,7 @@ The bot will start and begin listening for commands, while also launching the we
 ### Available Commands
 
 #### Moderation Commands
-- You shouldn't use the `/mod <command>` commands. They are the commands which are ran by the `/accept` command.
-> See `Mod commands` in issues tab.
-- `/ban`, `/kick`, `/timeout` are the commands you need.
+- `/ban`, `/kick`, `/timeout`, `/accept` are the native moderation commands available to moderators.
 
 #### Custom Commands
 Custom commands can be managed through the web dashboard at `http://<your_local_ip>:5000`.
@@ -116,7 +114,7 @@ The web dashboard provides several interfaces:
 3. **Appeal Submission**: User visits `/logs` and clicks "Appeal" on their log entry
 4. **Appeal Review**: Moderators check `/appeals` to see pending appeals
 5. **Case Opening**: Moderator clicks "Open Case" to create a private thread
-6. **Resolution**: Moderator uses `/mod accept` command to resolve the appeal
+6. **Resolution**: Moderator uses `/accept` command to resolve the appeal
 
 > This process is still non-functional, but more headway has been made.
 

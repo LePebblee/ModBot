@@ -72,8 +72,8 @@ class DiscordBot(commands.Bot):
                 self.create_dynamic_command(name, script)
             except Exception as e:
                 logging.error(f"Failed to load command {name}: {e}")
-        # Add Moderation command group
-        self.tree.add_command(Moderation(self))
+        # Add Moderation cog
+        await self.add_cog(Moderation(self))
         await self.tree.sync()
 
     async def resolve_user(self, user_id):
