@@ -14,8 +14,8 @@ import subprocess
 
 
 # external variables
-from log_helper import add_log
-from moderation import Moderation, notify_user_of_appeal
+from log_helper import add_log, get_log
+from moderation import accept_command, perform_accept_action, notify_user_of_appeal
 
 
 logging.basicConfig(level=logging.INFO)
@@ -72,8 +72,8 @@ class DiscordBot(commands.Bot):
                 self.create_dynamic_command(name, script)
             except Exception as e:
                 logging.error(f"Failed to load command {name}: {e}")
-        # Add Moderation command group
-        self.tree.add_command(Moderation(self))
+        # Add accept command
+        self.tree.add_command(accept_command)
         await self.tree.sync()
 
     async def resolve_user(self, user_id):
@@ -193,6 +193,95 @@ def logs():
 def appeals():
     all_appeals = load_json_file(APPEALS_FILE, [])
     return render_template('appeals.html', appeals=all_appeals)
+
+@app.route('/appeal_case/<user_id>/<log_id>')
+@login_required
+def appeal_case(user_id, log_id):
+    log_entry = get_log(log_id)
+    if not log_entry:
+        return "Log not found", 404
+
+    all_appeals = load_json_file(APPEALS_FILE, [])
+    appeal = next((a for a in all_appeals if a.get('user_id') == user_id and a.get('log_id') == log_id), None)
+
+    return render_template('appeal_case.html', user_id=user_id, log_id=log_id, log_entry=log_entry, appeal=appeal)
+
+@app.route('/api/accept_appeal', methods=['POST'])
+@login_required
+def api_accept_appeal():
+    user_id = request.form.get('user_id')
+    log_id = request.form.get('log_id')
+    action = request.form.get('action') # unban, untimeout, unkick
+    reason = request.form.get('reason') or "Appeal accepted"
+
+    if not user_id or not log_id or not action:
+        return jsonify({"status": "error", "message": "Missing fields"}), 400
+
+    async def _task():
+        try:
+            main_server_id = config.get('main_server')
+            guild = bot.get_guild(int(main_server_id))
+            await perform_accept_action(bot, guild, user_id, action, reason)
+
+            # Dismiss appeal
+            all_appeals = load_json_file(APPEALS_FILE, [])
+            new_appeals = [a for a in all_appeals if not (a.get('user_id') == user_id and a.get('log_id') == log_id)]
+            save_json_file(APPEALS_FILE, new_appeals)
+
+            return "Appeal accepted and action performed."
+        except Exception as e:
+            return f"Error: {e}"
+
+    future = asyncio.run_coroutine_threadsafe(_task(), bot.loop)
+    result = future.result(timeout=10)
+    return jsonify({"status": "success", "message": result})
+
+@app.route('/api/deny_appeal', methods=['POST'])
+@login_required
+def api_deny_appeal():
+    user_id = request.form.get('user_id')
+    log_id = request.form.get('log_id')
+    reason = request.form.get('reason') or "No reason given"
+
+    if not user_id or not log_id:
+        return jsonify({"status": "error", "message": "Missing fields"}), 400
+
+    async def _task():
+        try:
+            all_appeals = load_json_file(APPEALS_FILE, [])
+            appeal = next((a for a in all_appeals if a.get('user_id') == user_id and a.get('log_id') == log_id), None)
+
+            if appeal and appeal.get('thread_id'):
+                thread = await bot.fetch_channel(int(appeal.get('thread_id')))
+                await thread.send(f"This appeal has been denied. Reason: {reason}")
+
+            # Dismiss appeal
+            new_appeals = [a for a in all_appeals if not (a.get('user_id') == user_id and a.get('log_id') == log_id)]
+            save_json_file(APPEALS_FILE, new_appeals)
+
+            return "Appeal denied and thread notified."
+        except Exception as e:
+            return f"Error: {e}"
+
+    future = asyncio.run_coroutine_threadsafe(_task(), bot.loop)
+    result = future.result(timeout=10)
+    return jsonify({"status": "success", "message": result})
+
+@app.route('/api/invite_user', methods=['POST'])
+@login_required
+def api_invite_user():
+    user_id = request.form.get('user_id')
+    if not user_id:
+        return jsonify({"status": "error", "message": "Missing user_id"}), 400
+
+    async def _task():
+        invite_link = config.get('application_invite_link', 'https://discord.gg/invalid')
+        await notify_user_of_appeal(bot, user_id, invite_link)
+        return "Invite sent."
+
+    future = asyncio.run_coroutine_threadsafe(_task(), bot.loop)
+    result = future.result(timeout=10)
+    return jsonify({"status": "success", "message": result})
 
 @app.route('/add_cmd', methods=['POST'])
 @login_required
@@ -348,6 +437,14 @@ def open_case():
             # Create thread
             thread = await message.create_thread(name=f"appeal-{user_id}", auto_archive_duration=1440)
             
+            # Store thread_id in appeal entry
+            all_appeals = load_json_file(APPEALS_FILE, [])
+            for a in all_appeals:
+                if a.get('user_id') == user_id and a.get('log_id') == log_id:
+                    a['thread_id'] = str(thread.id)
+                    break
+            save_json_file(APPEALS_FILE, all_appeals)
+
             # Attempt to add user (Note: May fail if user is banned and not in the server)
             try:
                 user = await bot.fetch_user(int(user_id))

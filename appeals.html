@@ -128,6 +128,7 @@
                 
                 if (res.ok) {
                     alert('Success: ' + data.message);
+                    window.location.href = `/appeal_case/${userId}/${logId}`;
                 } else {
                     alert('Error: ' + data.message);
                 }
