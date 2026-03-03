@@ -54,6 +54,8 @@ Update the `config.json` file with your specific values:
     }
 }
 ```
+> Note: Use Discord's python library for commands, even in the Web UI. Plain text will *not* work.
+
 
 ### passwd.json
 Set a secure password for the web dashboard:
