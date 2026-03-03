@@ -57,3 +57,9 @@ def add_log(entry: Dict) -> None:
     # Newest entries first – the UI expects that order
     logs.insert(0, entry_with_id)
     _save_logs(logs)
+
+
+def get_log(log_id: str) -> Dict:
+    """Retrieve a single log entry by its ID."""
+    logs = _load_logs()
+    return next((log for log in logs if log.get("id") == log_id), None)

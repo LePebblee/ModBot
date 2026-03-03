@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DisCoder | Appeal Case</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-slate-950 border-r border-slate-800 flex flex-col hidden md:flex">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold tracking-tight text-indigo-400">DisCoder</h1>
+            <p class="text-xs text-slate-500 font-mono mt-1">Bot Management System</p>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-2">
+            <a href="/" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-indigo-400 rounded-lg transition-colors">
+                <i class="ph ph-squares-four text-xl"></i>
+                <span class="font-medium">Dashboard</span>
+            </a>
+            <a href="/logs" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-indigo-400 rounded-lg transition-colors">
+                <i class="ph ph-scroll text-xl"></i>
+                <span class="font-medium">Logs</span>
+            </a>
+            <a href="/appeals" class="flex items-center gap-3 px-4 py-3 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-lg transition-colors">
+                <i class="ph ph-gavel text-xl"></i>
+                <span class="font-medium">Appeals</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800">
+             <a href="/logout" class="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors mb-4">
+                <i class="ph ph-sign-out"></i> Logout
+            </a>
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                <span class="text-xs font-mono text-emerald-500">System Online</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-8">
+        <header class="flex justify-between items-center mb-8">
+            <div class="flex items-center gap-4">
+                <a href="/appeals" class="text-slate-400 hover:text-white transition-colors">
+                    <i class="ph ph-arrow-left text-2xl"></i>
+                </a>
+                <h2 class="text-2xl font-bold text-white">Appeal Case Management</h2>
+            </div>
+        </header>
+
+        <div class="max-w-4xl mx-auto space-y-6">
+            <!-- Case Info Card -->
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-8 shadow-lg">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div>
+                        <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">User Information</h3>
+                        <div class="flex items-center gap-3">
+                            <div class="bg-indigo-500/10 p-3 rounded-xl text-indigo-400">
+                                <i class="ph ph-user text-2xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-lg font-bold text-white">{{ user_id }}</p>
+                                <p class="text-sm text-slate-400">Target User ID</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Original Violation</h3>
+                        <div class="flex items-center gap-3">
+                            <div class="bg-amber-500/10 p-3 rounded-xl text-amber-400">
+                                <i class="ph ph-warning-circle text-2xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-lg font-bold text-white uppercase">{{ log_entry.type }}</p>
+                                <p class="text-sm text-slate-400">Log ID: {{ log_id }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-slate-900/50 rounded-xl p-6 border border-slate-700/50">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-3">Original Reason</h4>
+                        <p class="text-slate-300 italic">"{{ log_entry.reason }}"</p>
+                    </div>
+
+                    <div class="bg-indigo-500/5 rounded-xl p-6 border border-indigo-500/20">
+                        <h4 class="text-xs font-bold text-indigo-400/70 uppercase mb-3">User Appeal Message</h4>
+                        <p class="text-slate-200">"{{ appeal.text }}"</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Center -->
+            <div class="bg-slate-800 rounded-xl border border-slate-700 p-8 shadow-lg">
+                <h3 class="text-xl font-bold text-white mb-6">Action Center</h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button onclick="showAcceptModal()" class="flex flex-col items-center gap-3 p-6 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-xl transition-all group">
+                        <div class="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
+                            <i class="ph ph-check-circle text-2xl"></i>
+                        </div>
+                        <span class="font-bold text-emerald-400">Accept Appeal</span>
+                    </button>
+
+                    <button onclick="showDenyModal()" class="flex flex-col items-center gap-3 p-6 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-xl transition-all group">
+                        <div class="w-12 h-12 bg-rose-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-rose-500/20 group-hover:scale-110 transition-transform">
+                            <i class="ph ph-x-circle text-2xl"></i>
+                        </div>
+                        <span class="font-bold text-rose-400">Deny Appeal</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Accept Modal -->
+    <div id="acceptModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="p-6 border-b border-slate-700">
+                <h3 class="text-xl font-bold">Accept Appeal</h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-400 mb-2">Undo Action</label>
+                    <select id="acceptAction" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <option value="unban">Unban User</option>
+                        <option value="unkick">Record Overturn (Unkick)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-400 mb-2">Reason for Acceptance</label>
+                    <textarea id="acceptReason" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Enter reason for accepting the appeal..."></textarea>
+                </div>
+            </div>
+            <div class="p-6 bg-slate-900/50 flex justify-end gap-3">
+                <button onclick="closeModals()" class="px-4 py-2 text-slate-400 hover:text-white transition-colors">Cancel</button>
+                <button onclick="submitAccept()" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold transition-colors">Confirm & Accept</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deny Modal -->
+    <div id="denyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="p-6 border-b border-slate-700">
+                <h3 class="text-xl font-bold text-rose-400">Deny Appeal</h3>
+            </div>
+            <div class="p-6">
+                <label class="block text-sm font-medium text-slate-400 mb-2">Reason for Denial</label>
+                <textarea id="denyReason" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-rose-500 outline-none" placeholder="Enter reason for denying the appeal..."></textarea>
+            </div>
+            <div class="p-6 bg-slate-900/50 flex justify-end gap-3">
+                <button onclick="closeModals()" class="px-4 py-2 text-slate-400 hover:text-white transition-colors">Cancel</button>
+                <button onclick="submitDeny()" class="px-6 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-bold transition-colors">Confirm & Deny</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const userId = "{{ user_id }}";
+        const logId = "{{ log_id }}";
+
+        function showAcceptModal() {
+            document.getElementById('acceptModal').classList.replace('hidden', 'flex');
+        }
+
+        function showDenyModal() {
+            document.getElementById('denyModal').classList.replace('hidden', 'flex');
+        }
+
+        function closeModals() {
+            document.querySelectorAll('#acceptModal, #denyModal').forEach(m => m.classList.replace('flex', 'hidden'));
+        }
+
+        async function submitAccept() {
+            const action = document.getElementById('acceptAction').value;
+            const reason = document.getElementById('acceptReason').value;
+
+            const formData = new FormData();
+            formData.append('user_id', userId);
+            formData.append('log_id', logId);
+            formData.append('action', action);
+            formData.append('reason', reason);
+
+            try {
+                const res = await fetch('/api/accept_appeal', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    alert('Appeal accepted: ' + data.message);
+                    window.location.href = '/appeals';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (err) {
+                alert('Network error.');
+            }
+        }
+
+        async function submitDeny() {
+            const reason = document.getElementById('denyReason').value;
+
+            const formData = new FormData();
+            formData.append('user_id', userId);
+            formData.append('log_id', logId);
+            formData.append('reason', reason);
+
+            try {
+                const res = await fetch('/api/deny_appeal', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    alert('Appeal denied: ' + data.message);
+                    window.location.href = '/appeals';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (err) {
+                alert('Network error.');
+            }
+        }
+    </script>
+</body>
+</html>

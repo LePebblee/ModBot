@@ -91,8 +91,6 @@
                                 <span class="px-2 py-1 rounded bg-red-500/10 text-red-400 border border-red-500/20 text-xs font-bold uppercase">Ban</span>
                                 {% elif log.type == 'kick' %}
                                 <span class="px-2 py-1 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20 text-xs font-bold uppercase">Kick</span>
-                                {% elif log.type == 'timeout' %}
-                                <span class="px-2 py-1 rounded bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 text-xs font-bold uppercase">Timeout</span>
                                 {% else %}
                                 <span class="px-2 py-1 rounded bg-slate-500/10 text-slate-400 border border-slate-500/20 text-xs font-bold uppercase">{{ log.type }}</span>
                                 {% endif %}
