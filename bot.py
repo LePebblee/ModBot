@@ -220,7 +220,11 @@ def api_accept_appeal():
     async def _task():
         try:
             main_server_id = config.get('main_server')
+            if not main_server_id:
+                return False, "Main server ID not configured."
             guild = bot.get_guild(int(main_server_id))
+            if not guild:
+                return False, "Bot not in main server."
             await perform_accept_action(bot, guild, user_id, action, reason)
 
             # Dismiss appeal
@@ -228,13 +232,16 @@ def api_accept_appeal():
             new_appeals = [a for a in all_appeals if not (a.get('user_id') == user_id and a.get('log_id') == log_id)]
             save_json_file(APPEALS_FILE, new_appeals)
 
-            return "Appeal accepted and action performed."
+            return True, "Appeal accepted and action performed."
         except Exception as e:
-            return f"Error: {e}"
+            return False, f"Error: {e}"
 
     future = asyncio.run_coroutine_threadsafe(_task(), bot.loop)
-    result = future.result(timeout=10)
-    return jsonify({"status": "success", "message": result})
+    success, result = future.result(timeout=10)
+    if success:
+        return jsonify({"status": "success", "message": result})
+    else:
+        return jsonify({"status": "error", "message": result}), 500
 
 @app.route('/api/deny_appeal', methods=['POST'])
 @login_required
@@ -252,20 +259,26 @@ def api_deny_appeal():
             appeal = next((a for a in all_appeals if a.get('user_id') == user_id and a.get('log_id') == log_id), None)
 
             if appeal and appeal.get('thread_id'):
-                thread = await bot.fetch_channel(int(appeal.get('thread_id')))
-                await thread.send(f"This appeal has been denied. Reason: {reason}")
+                try:
+                    thread = await bot.fetch_channel(int(appeal.get('thread_id')))
+                    await thread.send(f"This appeal has been denied. Reason: {reason}")
+                except Exception as e:
+                    logging.error(f"Failed to send denial to thread: {e}")
 
             # Dismiss appeal
             new_appeals = [a for a in all_appeals if not (a.get('user_id') == user_id and a.get('log_id') == log_id)]
             save_json_file(APPEALS_FILE, new_appeals)
 
-            return "Appeal denied and thread notified."
+            return True, "Appeal denied and thread notified."
         except Exception as e:
-            return f"Error: {e}"
+            return False, f"Error: {e}"
 
     future = asyncio.run_coroutine_threadsafe(_task(), bot.loop)
-    result = future.result(timeout=10)
-    return jsonify({"status": "success", "message": result})
+    success, result = future.result(timeout=10)
+    if success:
+        return jsonify({"status": "success", "message": result})
+    else:
+        return jsonify({"status": "error", "message": result}), 500
 
 @app.route('/api/invite_user', methods=['POST'])
 @login_required
