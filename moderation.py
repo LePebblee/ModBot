@@ -12,12 +12,6 @@ async def perform_accept_action(bot, guild, user_id: str, action: str, reason: s
         user = await bot.fetch_user(uid)
         await guild.unban(user, reason=reason)
         log_type = "unban"
-    elif action == 'untimeout':
-        member = guild.get_member(uid)
-        if not member:
-            member = await guild.fetch_member(uid)
-        await member.timeout(None, reason=reason)
-        log_type = "untimeout"
     elif action == 'unkick':
         # Overturn kick (record-only)
         log_type = "unkick"
@@ -42,7 +36,6 @@ async def accept_command(interaction: discord.Interaction, user_id: str, reason:
         def __init__(self, target_user_id: str, target_reason: Optional[str], bot):
             options = [
                 discord.SelectOption(label="Unban", value="unban", description="Remove a ban for the user"),
-                discord.SelectOption(label="Untimeout", value="untimeout", description="Remove timeout from the user"),
                 discord.SelectOption(label="Unkick", value="unkick", description="Record that a kick was overturned"),
             ]
             super().__init__(placeholder="Select action to perform...", min_values=1, max_values=1, options=options)
