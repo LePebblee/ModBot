@@ -144,7 +144,8 @@ The web dashboard provides several interfaces:
 ### Todo:
 - Rewrite with human-only code (Currently, Jules is partially used) [Likely not happening soon because life exists]
 - Clean the code in general (It is currently very messy and unoptimized, with files required for functions being in a dedicated file even though they could be a single line in `config.json` [*cough cough* ***passwd.json*** *cough*])
-- Make the edit button in Web UI dashboard actually work
+- Make the edit button in the Web UI dashboard actually work
+- Remove "Generate with Qwen" block on the Web UI dashboard (It does not work, even with the qwen-coder cli. Don't try.)
 
 ### Contributing
 
