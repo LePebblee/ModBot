@@ -7,12 +7,14 @@ A comprehensive Discord moderation bot featuring automated logging, appeal syste
 
 ### Features
 
-- **Automated Logging**: All moderation actions (ban, kick, timeout) are automatically logged
-- **Web Dashboard**: Manage custom commands and view moderation logs through a web interface
-- **Appeal System**: Users can submit appeals for moderation actions with a dedicated workflow
-- **Multi-Server Support**: Separate servers for main moderation and appeal handling
-- **Dynamic Commands**: Create and manage custom slash commands through the web interface
-- **Thread-Based Appeals**: Automatic creation of private threads for appeal discussions
+- **Automated Logging**: Moderation actions (ban, kick) are automatically logged for the appeal system.
+- **Pre-action Notifications**: Users receive a DM with an explanation and appeal server invite link before being banned or kicked.
+- **Enhanced Appeal Dashboard**: Moderators can manage appeals through a dedicated "Appeal Case" page, allowing them to Accept or Deny appeals directly from the web.
+- **Web Dashboard**: Manage custom commands and view moderation logs through a web interface.
+- **Appeal System**: Users can submit appeals for moderation actions with a dedicated workflow.
+- **Multi-Server Support**: Separate servers for main moderation and appeal handling.
+- **Dynamic Commands**: Create and manage custom slash commands through the web interface.
+- **Thread-Based Appeals**: Automatic creation of private threads for appeal discussions.
 
 ### Prerequisites
 
@@ -94,9 +96,8 @@ The bot will start and begin listening for commands, while also launching the we
 ### Available Commands
 
 #### Moderation Commands
-- You shouldn't use the `/mod <command>` commands. They are the commands which are ran by the `/accept` command.
-> See `Mod commands` in issues tab.
-- `/ban`, `/kick`, `/timeout` are the commands you need.
+- `/ban`, `/kick`, `/timeout`: Core moderation actions. `/ban` and `/kick` notify the user via DM and create an appealable log.
+- `/accept`: Top-level command for moderators to manually resolve an appeal by overturning a ban or kick.
 
 #### Custom Commands
 Custom commands can be managed through the web dashboard at `http://<your_local_ip>:5000`.
@@ -105,37 +106,36 @@ Custom commands can be managed through the web dashboard at `http://<your_local_
 
 The web dashboard provides several interfaces:
 
-- **Dashboard** (`/`): Create and manage custom slash commands (requires login)
-- **Logs** (`/logs`): View all moderation logs (public access)
-- **Appeals** (`/appeals`): View and manage pending appeals (requires login)
+- **Dashboard** (`/`): Create and manage custom slash commands (requires login).
+- **Logs** (`/logs`): View all moderation logs (public access).
+- **Appeals** (`/appeals`): View pending appeals (requires login).
+- **Appeal Case** (`/appeal_case/<user_id>/<log_id>`): Manage a specific appeal case with options to Accept or Deny.
 
 ## Appeal Process Flow
 
-1. **Moderation Action**: A user is banned, kicked, or timed out
-2. **Log Creation**: The action is automatically logged
-3. **Appeal Submission**: User visits `/logs` and clicks "Appeal" on their log entry
-4. **Appeal Review**: Moderators check `/appeals` to see pending appeals
-5. **Case Opening**: Moderator clicks "Open Case" to create a private thread
-6. **Resolution**: Moderator uses `/mod accept` command to resolve the appeal
-
-> This process is still non-functional, but more headway has been made.
-
+1. **Moderation Action**: A user is banned or kicked via Discord command.
+2. **User Notification**: The user receives a DM with an invite to the appeals server.
+3. **Log Creation**: The action is automatically logged in the system.
+4. **Appeal Submission**: User visits `/logs`, finds their entry, and clicks "Appeal".
+5. **Case Opening**: Moderator checks `/appeals` and clicks "Open Case" to create a private Discord thread and access the management page.
+6. **Resolution**: Moderator uses the web dashboard to **Accept** (unban/unkick) or **Deny** (notifying the user in the thread) the appeal.
 
 ### File Structure
 
 - `bot.py`: Main bot application with both Discord bot and Flask web server
-- `moderation.py`: Moderation commands implementation
+- `moderation.py`: Implementation of the `/accept` command and core appeal actions
 - `log_helper.py`: Functions for managing moderation logs
 - `config.json`: Bot configuration (tokens, IDs, custom commands)
 - `passwd.json`: Web dashboard password
 - `logs.json`: Stored moderation logs
-- `appeals.json`: Pending appeals
-- All HTML files share names with their .json counterparts.
+- `appeals.json`: Pending appeals and thread tracking
+- `appeal_case.html`: Dashboard template for managing individual appeals
+- `appeals.html`, `dashboard.html`, `logs.html`, `login.html`: Web dashboard templates
 
 ### Security
 
-- The web dashboard and appeals page is password-protected
-- Moderation commands require appropriate Discord permissions (Untested, proceed with caution.)
+- The web dashboard and appeals management pages are password-protected.
+- Moderation commands include explicit permission checks (e.g., `ban_members`) to ensure security.
 
 ### Contributing
 
