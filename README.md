@@ -97,7 +97,7 @@ The bot will start and begin listening for commands, while also launching the we
 
 #### Moderation Commands
 - `/ban`, `/kick`, `/timeout`: Core moderation actions. `/ban` and `/kick` notify the user via DM and create an appealable log.
-- `/accept`: Top-level command for moderators to manually resolve an appeal by overturning a ban or kick.
+- `/accept`: Top-level command for moderators to manually resolve an appeal by overturning a ban or kick. (Also used on Appeal Case [See Web Dashboard -> Appeal Case on this readme file.])
 
 #### Custom Commands
 Custom commands can be managed through the web dashboard at `http://<your_local_ip>:5000`.
@@ -135,7 +135,13 @@ The web dashboard provides several interfaces:
 ### Security
 
 - The web dashboard and appeals management pages are password-protected.
+> Default configs use HTTP, not HTTPS. Proceed with caution.
 - Moderation commands include explicit permission checks (e.g., `ban_members`) to ensure security.
+> Untested. Proceed with caution.
+
+### Todo:
+- Rewrite with human-only code (Currently, Jules is partially used) [Likely not happening soon because life exists]
+- Clean the code in general (It is currently very messy and unoptimized, with files required for functions being in a dedicated file even though they could be a single line in `config.json` [*cough cough* ***passwd.json*** *cough*])
 
 ### Contributing
 
